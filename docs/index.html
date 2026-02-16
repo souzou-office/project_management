@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>見積依頼管理</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+      background: #f0f2f5;
+      color: #333;
+      font-size: 14px;
+    }
+
+    /* ヘッダー */
+    .header {
+      background: #1a73e8;
+      color: white;
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .header h1 {
+      font-size: 18px;
+      font-weight: 600;
+    }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .badge {
+      background: rgba(255,255,255,0.2);
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+    }
+    .btn-refresh {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: white;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .btn-refresh:hover { background: rgba(255,255,255,0.25); }
+
+    /* タブ */
+    .tabs {
+      background: white;
+      padding: 0 24px;
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid #ddd;
+      overflow-x: auto;
+    }
+    .tab {
+      padding: 12px 20px;
+      cursor: pointer;
+      font-size: 13px;
+      color: #666;
+      border-bottom: 3px solid transparent;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+    .tab:hover { color: #1a73e8; background: #f8f9ff; }
+    .tab.active {
+      color: #1a73e8;
+      border-bottom-color: #1a73e8;
+      font-weight: 600;
+    }
+    .tab .count {
+      background: #e8eaed;
+      color: #666;
+      padding: 1px 7px;
+      border-radius: 10px;
+      font-size: 11px;
+      margin-left: 6px;
+    }
+    .tab.active .count {
+      background: #e8f0fe;
+      color: #1a73e8;
+    }
+
+    /* コンテンツ */
+    .content {
+      padding: 20px 24px;
+    }
+
+    /* カード型テーブル */
+    .table-container {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      overflow: hidden;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    thead th {
+      background: #fafbfc;
+      padding: 10px 14px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 12px;
+      color: #666;
+      border-bottom: 1px solid #e8eaed;
+      white-space: nowrap;
+    }
+    tbody tr {
+      border-bottom: 1px solid #f0f0f0;
+      transition: background 0.15s;
+    }
+    tbody tr:hover { background: #f8f9ff; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody td {
+      padding: 12px 14px;
+      vertical-align: middle;
+    }
+
+    /* 会社名 */
+    .company-name {
+      font-weight: 600;
+      color: #1a73e8;
+    }
+
+    /* 案件要約 */
+    .summary {
+      color: #555;
+      max-width: 400px;
+      line-height: 1.5;
+    }
+
+    /* 日時 */
+    .datetime {
+      color: #888;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    /* リンクボタン */
+    .link-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 4px;
+      text-decoration: none;
+      font-size: 12px;
+      transition: background 0.15s;
+    }
+    .link-folder {
+      background: #fff3e0;
+      color: #e65100;
+    }
+    .link-folder:hover { background: #ffe0b2; }
+    .link-mail {
+      background: #e3f2fd;
+      color: #1565c0;
+    }
+    .link-mail:hover { background: #bbdefb; }
+
+    /* ドロップダウン */
+    .staff-select {
+      padding: 5px 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 13px;
+      background: white;
+      cursor: pointer;
+      min-width: 80px;
+    }
+    .staff-select:focus { border-color: #1a73e8; outline: none; }
+    .staff-badge {
+      display: inline-block;
+      background: #e8f0fe;
+      color: #1a73e8;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    /* アクションボタン */
+    .actions {
+      display: flex;
+      gap: 6px;
+    }
+    .btn-action {
+      padding: 5px 12px;
+      border: none;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-done {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+    .btn-done:hover { background: #c8e6c9; }
+    .btn-exclude {
+      background: #fce4ec;
+      color: #c62828;
+    }
+    .btn-exclude:hover { background: #f8bbd0; }
+    .btn-return {
+      background: #e3f2fd;
+      color: #1565c0;
+    }
+    .btn-return:hover { background: #bbdefb; }
+
+    /* ステータスバー */
+    .status-bar {
+      padding: 10px 24px;
+      background: white;
+      border-top: 1px solid #eee;
+      font-size: 12px;
+      color: #888;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* タブコンテンツ */
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* レスポンシブ */
+    @media (max-width: 768px) {
+      .content { padding: 12px; }
+      .header { padding: 10px 16px; }
+      .tabs { padding: 0 12px; }
+      .tab { padding: 10px 14px; font-size: 12px; }
+      thead th, tbody td { padding: 8px 10px; }
+      .summary { max-width: 200px; }
+      .col-subject { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ヘッダー -->
+  <div class="header">
+    <h1>見積依頼管理</h1>
+    <div class="header-right">
+      <span class="badge">最終更新: 15:32</span>
+      <button class="btn-refresh" onclick="location.reload()">更新</button>
+    </div>
+  </div>
+
+  <!-- タブ -->
+  <div class="tabs">
+    <div class="tab active" data-tab="main">メイン<span class="count">8</span></div>
+    <div class="tab" data-tab="staff-furue">古江<span class="count">3</span></div>
+    <div class="tab" data-tab="staff-shoubu">菖蒲<span class="count">2</span></div>
+    <div class="tab" data-tab="staff-ishibashi">石橋<span class="count">1</span></div>
+    <div class="tab" data-tab="staff-eguchi">江口<span class="count">0</span></div>
+    <div class="tab" data-tab="staff-nakamura">中村<span class="count">0</span></div>
+    <div class="tab" data-tab="staff-ikeda">池田<span class="count">1</span></div>
+    <div class="tab" data-tab="staff-ura">浦<span class="count">0</span></div>
+    <div class="tab" data-tab="done">処理済<span class="count">24</span></div>
+    <div class="tab" data-tab="exclude">除外<span class="count">5</span></div>
+  </div>
+
+  <!-- メインタブ -->
+  <div class="content">
+    <div class="tab-content active" id="main">
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>会社名</th>
+              <th>案件要約</th>
+              <th class="col-subject">件名</th>
+              <th>日時</th>
+              <th>資料</th>
+              <th>メール</th>
+              <th>担当者</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="company-name">山田不動産株式会社</span></td>
+              <td><span class="summary">福岡市中央区天神の土地売買に伴う所有権移転登記の見積依頼</span></td>
+              <td class="col-subject">土地売買に伴う登記費用のお見積り依頼</td>
+              <td><span class="datetime">25/2/15 14:23</span></td>
+              <td><a href="#" class="link-btn link-folder">📂 開く</a></td>
+              <td><a href="#" class="link-btn link-mail">📧 開く</a></td>
+              <td>
+                <select class="staff-select">
+                  <option value="">--</option>
+                  <option>古江</option>
+                  <option>菖蒲</option>
+                  <option>石橋</option>
+                  <option>江口</option>
+                  <option>中村</option>
+                  <option>池田</option>
+                  <option>浦</option>
+                </select>
+              </td>
+              <td>
+                <div class="actions">
+                  <button class="btn-action btn-done">処理済</button>
+                  <button class="btn-action btn-exclude">除外</button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><span class="company-name">佐藤司法書士事務所</span></td>
+              <td><span class="summary">相続登記（不動産3件）の費用確認</span></td>
+              <td class="col-subject">相続登記の費用について</td>
+              <td><span class="datetime">25/2/15 11:05</span></td>
+              <td></td>
+              <td><a href="#" class="link-btn link-mail">📧 開く</a></td>
+              <td>
+                <select class="staff-select">
+                  <option value="">--</option>
+                  <option>古江</option>
+                  <option selected>菖蒲</option>
+                  <option>石橋</option>
+                  <option>江口</option>
+                  <option>中村</option>
+                  <option>池田</option>
+                  <option>浦</option>
+                </select>
+              </td>
+              <td>
+                <div class="actions">
+                  <button class="btn-action btn-done">処理済</button>
+                  <button class="btn-action btn-exclude">除外</button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><span class="company-name">田中建設工業</span></td>
+              <td><span class="summary">新築マンション表題登記および保存登記の見積依頼（20戸）</span></td>
+              <td class="col-subject">マンション登記費用のお見積り</td>
+              <td><span class="datetime">25/2/14 16:45</span></td>
+              <td><a href="#" class="link-btn link-folder">📂 開く</a></td>
+              <td><a href="#" class="link-btn link-mail">📧 開く</a></td>
+              <td>
+                <select class="staff-select">
+                  <option value="">--</option>
+                  <option>古江</option>
+                  <option>菖蒲</option>
+                  <option>石橋</option>
+                  <option>江口</option>
+                  <option>中村</option>
+                  <option>池田</option>
+                  <option>浦</option>
+                </select>
+              </td>
+              <td>
+                <div class="actions">
+                  <button class="btn-action btn-done">処理済</button>
+                  <button class="btn-action btn-exclude">除外</button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><span class="company-name">株式会社九州ホーム</span></td>
+              <td><span class="summary">中古戸建売買の決済立会い・所有権移転登記の依頼</span></td>
+              <td class="col-subject">売買決済の件でご依頼</td>
+              <td><span class="datetime">25/2/14 10:12</span></td>
+              <td><a href="#" class="link-btn link-folder">📂 開く</a></td>
+              <td><a href="#" class="link-btn link-mail">📧 開く</a></td>
+              <td>
+                <select class="staff-select">
+                  <option value="">--</option>
+                  <option selected>古江</option>
+                  <option>菖蒲</option>
+                  <option>石橋</option>
+                  <option>江口</option>
+                  <option>中村</option>
+                  <option>池田</option>
+                  <option>浦</option>
+                </select>
+              </td>
+              <td>
+                <div class="actions">
+                  <button class="btn-action btn-done">処理済</button>
+                  <button class="btn-action btn-exclude">除外</button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><span class="company-name">有限会社丸山商事</span></td>
+              <td><span class="summary">会社設立（合同会社）の登記費用と必要書類について</span></td>
+              <td class="col-subject">合同会社設立のご相談</td>
+              <td><span class="datetime">25/2/13 17:30</span></td>
+              <td></td>
+              <td><a href="#" class="link-btn link-mail">📧 開く</a></td>
+              <td>
+                <select class="staff-select">
+                  <option value="">--</option>
+                  <option>古江</option>
+                  <option>菖蒲</option>
+                  <option>石橋</option>
+                  <option>江口</option>
+                  <option>中村</option>
+                  <option>池田</option>
+                  <option>浦</option>
+                </select>
+              </td>
+              <td>
+                <div class="actions">
+                  <button class="btn-action btn-done">処理済</button>
+                  <button class="btn-action btn-exclude">除外</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 担当者タブ（例：古江） -->
+    <div class="tab-content" id="staff-furue">
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>会社名</th>
+              <th>案件要約</th>
+              <th class="col-subject">件名</th>
+              <th>日時</th>
+              <th>資料</th>
+              <th>メール</th>
+              <th>担当者</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="company-name">西日本住宅販売</span></td>
+              <td><span class="summary">抵当権設定登記の見積依頼（住宅ローン）</span></td>
+              <td class="col-subject">抵当権設定の費用について</td>
+              <td><span class="datetime">25/2/13 09:15</span></td>
+              <td><a href="#" class="link-btn link-folder">📂 開く</a></td>
+              <td><a href="#" class="link-btn link-mail">📧 開く</a></td>
+              <td><span class="staff-badge">古江</span></td>
+              <td>
+                <div class="actions">
+                  <button class="btn-action btn-done">処理済</button>
+                  <button class="btn-action btn-return">戻す</button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><span class="company-name">福岡銀行 天神支店</span></td>
+              <td><span class="summary">根抵当権抹消登記の見積依頼</span></td>
+              <td class="col-subject">根抵当権抹消の件</td>
+              <td><span class="datetime">25/2/12 15:40</span></td>
+              <td></td>
+              <td><a href="#" class="link-btn link-mail">📧 開く</a></td>
+              <td><span class="staff-badge">古江</span></td>
+              <td>
+                <div class="actions">
+                  <button class="btn-action btn-done">処理済</button>
+                  <button class="btn-action btn-return">戻す</button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><span class="company-name">エイブル博多駅前店</span></td>
+              <td><span class="summary">賃貸物件売買に伴う所有権移転登記の費用確認</span></td>
+              <td class="col-subject">物件売買の登記費用お見積り</td>
+              <td><span class="datetime">25/2/11 13:22</span></td>
+              <td><a href="#" class="link-btn link-folder">📂 開く</a></td>
+              <td><a href="#" class="link-btn link-mail">📧 開く</a></td>
+              <td><span class="staff-badge">古江</span></td>
+              <td>
+                <div class="actions">
+                  <button class="btn-action btn-done">処理済</button>
+                  <button class="btn-action btn-return">戻す</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 処理済タブ -->
+    <div class="tab-content" id="done">
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>会社名</th>
+              <th>案件要約</th>
+              <th class="col-subject">件名</th>
+              <th>日時</th>
+              <th>資料</th>
+              <th>メール</th>
+              <th>担当者</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="company-name">三井住友信託銀行</span></td>
+              <td><span class="summary">住宅ローン完済に伴う抵当権抹消登記</span></td>
+              <td class="col-subject">抵当権抹消の見積依頼</td>
+              <td><span class="datetime">25/2/10 10:00</span></td>
+              <td><a href="#" class="link-btn link-folder">📂 開く</a></td>
+              <td><a href="#" class="link-btn link-mail">📧 開く</a></td>
+              <td><span class="staff-badge">菖蒲</span></td>
+              <td>
+                <div class="actions">
+                  <button class="btn-action btn-return">戻す</button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><span class="company-name">大和ハウス工業</span></td>
+              <td><span class="summary">新築建物の表題登記・保存登記の依頼</span></td>
+              <td class="col-subject">建物登記のご依頼</td>
+              <td><span class="datetime">25/2/9 14:55</span></td>
+              <td></td>
+              <td><a href="#" class="link-btn link-mail">📧 開く</a></td>
+              <td><span class="staff-badge">石橋</span></td>
+              <td>
+                <div class="actions">
+                  <button class="btn-action btn-return">戻す</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 除外タブ -->
+    <div class="tab-content" id="exclude">
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>会社名</th>
+              <th>案件要約</th>
+              <th class="col-subject">件名</th>
+              <th>日時</th>
+              <th>資料</th>
+              <th>メール</th>
+              <th>担当者</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="company-name">株式会社リーガルテック</span></td>
+              <td><span class="summary">登記ソフトの営業メール（見積依頼ではない）</span></td>
+              <td class="col-subject">業務効率化のご提案</td>
+              <td><span class="datetime">25/2/12 09:30</span></td>
+              <td></td>
+              <td><a href="#" class="link-btn link-mail">📧 開く</a></td>
+              <td></td>
+              <td>
+                <div class="actions">
+                  <button class="btn-action btn-return">戻す</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ステータスバー -->
+  <div class="status-bar">
+    <span>全 38 件（未処理: 8 / 担当者割当済: 7 / 処理済: 24 / 除外: 5）</span>
+    <span>データ元: Google スプレッドシート</span>
+  </div>
+
+  <!-- タブ切り替えJS -->
+  <script>
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        const target = tab.getAttribute('data-tab');
+        const content = document.getElementById(target);
+        if (content) content.classList.add('active');
+      });
+    });
+
+    // 処理済ボタン（モック動作）
+    document.querySelectorAll('.btn-done').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const row = btn.closest('tr');
+        row.style.background = '#e8f5e9';
+        row.style.opacity = '0.5';
+        setTimeout(() => row.remove(), 500);
+      });
+    });
+
+    // 除外ボタン（モック動作）
+    document.querySelectorAll('.btn-exclude').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const row = btn.closest('tr');
+        row.style.background = '#fce4ec';
+        row.style.opacity = '0.5';
+        setTimeout(() => row.remove(), 500);
+      });
+    });
+
+    // 戻すボタン（モック動作）
+    document.querySelectorAll('.btn-return').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const row = btn.closest('tr');
+        row.style.background = '#e3f2fd';
+        row.style.opacity = '0.5';
+        setTimeout(() => row.remove(), 500);
+      });
+    });
+  </script>
+
+</body>
+</html>
