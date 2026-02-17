@@ -514,6 +514,165 @@ function deleteEmptyRows() {
 }
 
 // ============================================
+// 業務管理ソフト連携：API経由で案件概要を取得
+// ============================================
+// 【事前設定】Script Properties に以下を追加:
+//   BUSINESS_APP_URL    : 業務管理ソフトのベースURL（例: https://your-app.example.com）
+//   BUSINESS_APP_API_TOKEN : API認証トークン
+
+/**
+ * URLから案件IDを抽出してAPIで概要を取得
+ */
+function fetchCaseSummary(caseUrl) {
+  const baseUrl = PropertiesService.getScriptProperties().getProperty('BUSINESS_APP_URL');
+  const apiToken = PropertiesService.getScriptProperties().getProperty('BUSINESS_APP_API_TOKEN');
+
+  if (!baseUrl || !apiToken) {
+    Logger.log('業務管理ソフトのURL/APIトークンが未設定です');
+    return null;
+  }
+
+  // URLから案件IDを抽出（/cases/123 や /matters/123 等に対応）
+  const match = caseUrl.match(/\/(?:cases|matters|projects)\/(\d+)/);
+  if (!match) {
+    Logger.log('URLから案件IDを抽出できません: ' + caseUrl);
+    return null;
+  }
+  const caseId = match[1];
+
+  try {
+    const response = UrlFetchApp.fetch(baseUrl + '/api/cases/' + caseId + '/summary', {
+      method: 'get',
+      headers: {
+        'Authorization': 'Bearer ' + apiToken,
+        'Accept': 'application/json'
+      },
+      muteHttpExceptions: true
+    });
+
+    const statusCode = response.getResponseCode();
+    if (statusCode !== 200) {
+      Logger.log('API error (' + statusCode + '): ' + response.getContentText());
+      return null;
+    }
+
+    return JSON.parse(response.getContentText());
+  } catch (e) {
+    Logger.log('業務管理ソフトAPI取得エラー: ' + e);
+    return null;
+  }
+}
+
+/**
+ * 取得データをセルノート用テキストに整形
+ */
+function formatCaseSummaryNote(data) {
+  if (!data) return '';
+
+  let note = '━━ 業務管理ソフト 案件概要 ━━\n';
+  note += '【ステータス】' + (data.status || '不明') + '\n';
+  note += '【登記種別】' + (data.registration_type || '-') + '\n';
+  note += '【依頼者】' + (data.client_name || '-') + '\n';
+  note += '【対象物件】' + (data.property || '-') + '\n';
+  note += '【進捗】' + (data.progress || '-') + '\n';
+  note += '【期日】' + (data.deadline || '-') + '\n';
+  note += '【担当】' + (data.staff || '-') + '\n';
+  if (data.notes) note += '【備考】' + data.notes + '\n';
+  note += '━━━━━━━━━━━━━━━━━━\n';
+  note += '最終取得: ' + Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yy/M/d HH:mm');
+
+  return note;
+}
+
+/**
+ * 全シートの案件概要を一括更新
+ */
+function refreshAllCaseSummaries() {
+  const ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+  const allNames = ['メイン'].concat(CONFIG.STAFF_LIST).concat(['処理済']);
+
+  let updated = 0;
+  let errors = 0;
+
+  allNames.forEach(name => {
+    const sheet = ss.getSheetByName(name);
+    if (!sheet) return;
+    const lastRow = sheet.getLastRow();
+    if (lastRow <= 1) return;
+
+    const urlCol = 8;
+    const urls = sheet.getRange(2, urlCol, lastRow - 1, 1).getValues();
+
+    for (let i = 0; i < urls.length; i++) {
+      const url = urls[i][0];
+      if (!url || !url.toString().match(/\/(?:cases|matters|projects)\/\d+/)) continue;
+
+      const data = fetchCaseSummary(url.toString());
+      if (data) {
+        const note = formatCaseSummaryNote(data);
+        sheet.getRange(i + 2, urlCol).setNote(note);
+        updated++;
+      } else {
+        errors++;
+      }
+
+      Utilities.sleep(500); // API rate limit 対策
+    }
+  });
+
+  Logger.log('案件概要更新完了: ' + updated + '件成功, ' + errors + '件エラー');
+  SpreadsheetApp.getActiveSpreadsheet().toast(
+    updated + '件の案件概要を更新しました' + (errors > 0 ? '（' + errors + '件エラー）' : ''),
+    '業務管理ソフト連携', 5
+  );
+}
+
+/**
+ * 選択行の案件概要のみ更新
+ */
+function refreshSelectedCaseSummary() {
+  const sheet = SpreadsheetApp.getActiveSheet();
+  const row = SpreadsheetApp.getActiveRange().getRow();
+  if (row <= 1) {
+    SpreadsheetApp.getActiveSpreadsheet().toast('データ行を選択してください', 'エラー', 3);
+    return;
+  }
+
+  const url = sheet.getRange(row, 8).getValue();
+  if (!url || !url.toString().match(/\/(?:cases|matters|projects)\/\d+/)) {
+    SpreadsheetApp.getActiveSpreadsheet().toast('URL列に業務管理ソフトのURLが入力されていません', 'エラー', 3);
+    return;
+  }
+
+  const data = fetchCaseSummary(url.toString());
+  if (data) {
+    const note = formatCaseSummaryNote(data);
+    sheet.getRange(row, 8).setNote(note);
+    SpreadsheetApp.getActiveSpreadsheet().toast('案件概要を更新しました', '成功', 3);
+  } else {
+    SpreadsheetApp.getActiveSpreadsheet().toast('案件概要の取得に失敗しました', 'エラー', 3);
+  }
+}
+
+/**
+ * Web App用：案件概要をJSON形式で返す（HTMLダッシュボードから呼び出し用）
+ */
+function getCaseSummaryForWeb(caseUrl) {
+  return fetchCaseSummary(caseUrl);
+}
+
+// ============================================
+// カスタムメニュー（スプレッドシート起動時に表示）
+// ============================================
+function onOpen() {
+  SpreadsheetApp.getUi()
+    .createMenu('業務管理ソフト連携')
+    .addItem('案件概要を一括更新', 'refreshAllCaseSummaries')
+    .addItem('選択行の案件概要を更新', 'refreshSelectedCaseSummary')
+    .addToUi();
+}
+
+// ============================================
 // テスト・ユーティリティ
 // ============================================
 function testDropdown() {

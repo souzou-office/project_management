@@ -215,6 +215,99 @@
     }
     .btn-return:hover { background: #bbdefb; }
 
+    /* 業務管理ソフトリンク */
+    .link-case {
+      background: #f3e5f5;
+      color: #7b1fa2;
+    }
+    .link-case:hover { background: #e1bee7; }
+
+    /* 案件概要モーダル */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      width: 480px;
+      max-width: 90vw;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid #eee;
+    }
+    .modal-header h3 {
+      font-size: 15px;
+      color: #333;
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: #999;
+      padding: 4px 8px;
+    }
+    .modal-close:hover { color: #333; }
+    .modal-body {
+      padding: 20px;
+    }
+    .case-detail-row {
+      display: flex;
+      padding: 8px 0;
+      border-bottom: 1px solid #f5f5f5;
+    }
+    .case-detail-row:last-child { border-bottom: none; }
+    .case-detail-label {
+      width: 100px;
+      flex-shrink: 0;
+      font-weight: 600;
+      color: #666;
+      font-size: 12px;
+    }
+    .case-detail-value {
+      flex: 1;
+      color: #333;
+      font-size: 13px;
+    }
+    .case-status-badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .case-status-active {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+    .case-status-pending {
+      background: #fff3e0;
+      color: #e65100;
+    }
+    .case-status-done {
+      background: #e3f2fd;
+      color: #1565c0;
+    }
+    .case-loading {
+      text-align: center;
+      padding: 40px;
+      color: #999;
+    }
+
     /* ステータスバー */
     .status-bar {
       padding: 10px 24px;
@@ -280,6 +373,7 @@
               <th>日時</th>
               <th>資料</th>
               <th>メール</th>
+              <th>業務管理</th>
               <th>担当者</th>
               <th>操作</th>
             </tr>
@@ -292,6 +386,7 @@
               <td><span class="datetime">25/2/15 14:23</span></td>
               <td><a href="#" class="link-btn link-folder">📂 開く</a></td>
               <td><a href="#" class="link-btn link-mail">📧 開く</a></td>
+              <td><a href="#" class="link-btn link-case" onclick="showCaseDetail(42, event)">案件</a></td>
               <td>
                 <select class="staff-select">
                   <option value="">--</option>
@@ -318,6 +413,7 @@
               <td><span class="datetime">25/2/15 11:05</span></td>
               <td></td>
               <td><a href="#" class="link-btn link-mail">📧 開く</a></td>
+              <td><a href="#" class="link-btn link-case" onclick="showCaseDetail(38, event)">案件</a></td>
               <td>
                 <select class="staff-select">
                   <option value="">--</option>
@@ -344,6 +440,7 @@
               <td><span class="datetime">25/2/14 16:45</span></td>
               <td><a href="#" class="link-btn link-folder">📂 開く</a></td>
               <td><a href="#" class="link-btn link-mail">📧 開く</a></td>
+              <td></td>
               <td>
                 <select class="staff-select">
                   <option value="">--</option>
@@ -370,6 +467,7 @@
               <td><span class="datetime">25/2/14 10:12</span></td>
               <td><a href="#" class="link-btn link-folder">📂 開く</a></td>
               <td><a href="#" class="link-btn link-mail">📧 開く</a></td>
+              <td><a href="#" class="link-btn link-case" onclick="showCaseDetail(15, event)">案件</a></td>
               <td>
                 <select class="staff-select">
                   <option value="">--</option>
@@ -396,6 +494,7 @@
               <td><span class="datetime">25/2/13 17:30</span></td>
               <td></td>
               <td><a href="#" class="link-btn link-mail">📧 開く</a></td>
+              <td></td>
               <td>
                 <select class="staff-select">
                   <option value="">--</option>
@@ -432,6 +531,7 @@
               <th>日時</th>
               <th>資料</th>
               <th>メール</th>
+              <th>業務管理</th>
               <th>担当者</th>
               <th>操作</th>
             </tr>
@@ -444,6 +544,7 @@
               <td><span class="datetime">25/2/13 09:15</span></td>
               <td><a href="#" class="link-btn link-folder">📂 開く</a></td>
               <td><a href="#" class="link-btn link-mail">📧 開く</a></td>
+              <td><a href="#" class="link-btn link-case" onclick="showCaseDetail(31, event)">案件</a></td>
               <td><span class="staff-badge">古江</span></td>
               <td>
                 <div class="actions">
@@ -459,6 +560,7 @@
               <td><span class="datetime">25/2/12 15:40</span></td>
               <td></td>
               <td><a href="#" class="link-btn link-mail">📧 開く</a></td>
+              <td></td>
               <td><span class="staff-badge">古江</span></td>
               <td>
                 <div class="actions">
@@ -474,6 +576,7 @@
               <td><span class="datetime">25/2/11 13:22</span></td>
               <td><a href="#" class="link-btn link-folder">📂 開く</a></td>
               <td><a href="#" class="link-btn link-mail">📧 開く</a></td>
+              <td><a href="#" class="link-btn link-case" onclick="showCaseDetail(27, event)">案件</a></td>
               <td><span class="staff-badge">古江</span></td>
               <td>
                 <div class="actions">
@@ -499,6 +602,7 @@
               <th>日時</th>
               <th>資料</th>
               <th>メール</th>
+              <th>業務管理</th>
               <th>担当者</th>
               <th>操作</th>
             </tr>
@@ -511,6 +615,7 @@
               <td><span class="datetime">25/2/10 10:00</span></td>
               <td><a href="#" class="link-btn link-folder">📂 開く</a></td>
               <td><a href="#" class="link-btn link-mail">📧 開く</a></td>
+              <td><a href="#" class="link-btn link-case" onclick="showCaseDetail(9, event)">案件</a></td>
               <td><span class="staff-badge">菖蒲</span></td>
               <td>
                 <div class="actions">
@@ -525,6 +630,7 @@
               <td><span class="datetime">25/2/9 14:55</span></td>
               <td></td>
               <td><a href="#" class="link-btn link-mail">📧 開く</a></td>
+              <td></td>
               <td><span class="staff-badge">石橋</span></td>
               <td>
                 <div class="actions">
@@ -549,6 +655,7 @@
               <th>日時</th>
               <th>資料</th>
               <th>メール</th>
+              <th>業務管理</th>
               <th>担当者</th>
               <th>操作</th>
             </tr>
@@ -562,6 +669,7 @@
               <td></td>
               <td><a href="#" class="link-btn link-mail">📧 開く</a></td>
               <td></td>
+              <td></td>
               <td>
                 <div class="actions">
                   <button class="btn-action btn-return">戻す</button>
@@ -570,6 +678,19 @@
             </tr>
           </tbody>
         </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 案件概要モーダル -->
+  <div class="modal-overlay" id="caseModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>業務管理ソフト - 案件概要</h3>
+        <button class="modal-close" onclick="closeCaseModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="caseModalBody">
+        <div class="case-loading">読み込み中...</div>
       </div>
     </div>
   </div>
@@ -621,6 +742,92 @@
         row.style.opacity = '0.5';
         setTimeout(() => row.remove(), 500);
       });
+    });
+
+    // ============================================
+    // 業務管理ソフト連携：案件概要モーダル
+    // ============================================
+
+    // モック用サンプルデータ（実際はAPIから取得）
+    const mockCaseData = {
+      9:  { status: '完了', registration_type: '抵当権抹消登記', client_name: '三井住友信託銀行', property: '福岡市中央区赤坂1-2-3 マンション301号', progress: '完了', deadline: '2026-02-08', staff: '菖蒲', notes: '' },
+      15: { status: '進行中', registration_type: '所有権移転登記', client_name: '株式会社九州ホーム', property: '福岡市博多区博多駅前2-5-10 戸建', progress: '書類準備中（2/4完了）', deadline: '2026-03-01', staff: '古江', notes: '売主側の実印持参確認済' },
+      27: { status: '進行中', registration_type: '所有権移転登記', client_name: 'エイブル博多駅前店', property: '福岡市南区大橋3-8-15 賃貸物件', progress: '申請準備中', deadline: '2026-02-28', staff: '古江', notes: '' },
+      31: { status: '書類待ち', registration_type: '抵当権設定登記', client_name: '西日本住宅販売', property: '福岡市西区姪浜4-1-20 新築戸建', progress: '金融機関書類待ち', deadline: '2026-03-10', staff: '古江', notes: '住宅ローン審査通過済' },
+      38: { status: '進行中', registration_type: '相続登記', client_name: '佐藤司法書士事務所', property: '春日市春日原北町1-5 他2件', progress: '戸籍収集中（8/12通）', deadline: '2026-03-20', staff: '菖蒲', notes: '被相続人の出生地が遠方のため郵送請求中' },
+      42: { status: '見積回答済', registration_type: '所有権移転登記', client_name: '山田不動産株式会社', property: '福岡市中央区天神3-10-5 土地200㎡', progress: '見積回答済・返答待ち', deadline: '-', staff: '-', notes: '登録免許税の軽減措置適用可能' },
+    };
+
+    function showCaseDetail(caseId, event) {
+      if (event) event.preventDefault();
+      const modal = document.getElementById('caseModal');
+      const body = document.getElementById('caseModalBody');
+
+      // ローディング表示
+      body.innerHTML = '<div class="case-loading">読み込み中...</div>';
+      modal.classList.add('active');
+
+      // モックデータを使用（実際はAPI呼び出し）
+      setTimeout(() => {
+        const data = mockCaseData[caseId];
+        if (!data) {
+          body.innerHTML = '<div class="case-loading">案件データが見つかりません</div>';
+          return;
+        }
+
+        const statusClass = data.status === '完了' ? 'case-status-done'
+          : data.status.includes('待ち') ? 'case-status-pending'
+          : 'case-status-active';
+
+        body.innerHTML = `
+          <div class="case-detail-row">
+            <span class="case-detail-label">ステータス</span>
+            <span class="case-detail-value"><span class="case-status-badge ${statusClass}">${data.status}</span></span>
+          </div>
+          <div class="case-detail-row">
+            <span class="case-detail-label">登記種別</span>
+            <span class="case-detail-value">${data.registration_type}</span>
+          </div>
+          <div class="case-detail-row">
+            <span class="case-detail-label">依頼者</span>
+            <span class="case-detail-value">${data.client_name}</span>
+          </div>
+          <div class="case-detail-row">
+            <span class="case-detail-label">対象物件</span>
+            <span class="case-detail-value">${data.property}</span>
+          </div>
+          <div class="case-detail-row">
+            <span class="case-detail-label">進捗</span>
+            <span class="case-detail-value">${data.progress}</span>
+          </div>
+          <div class="case-detail-row">
+            <span class="case-detail-label">期日</span>
+            <span class="case-detail-value">${data.deadline}</span>
+          </div>
+          <div class="case-detail-row">
+            <span class="case-detail-label">担当</span>
+            <span class="case-detail-value">${data.staff}</span>
+          </div>
+          ${data.notes ? `<div class="case-detail-row">
+            <span class="case-detail-label">備考</span>
+            <span class="case-detail-value">${data.notes}</span>
+          </div>` : ''}
+        `;
+      }, 300); // モック用遅延（実際のAPI呼び出し時は不要）
+    }
+
+    function closeCaseModal() {
+      document.getElementById('caseModal').classList.remove('active');
+    }
+
+    // オーバーレイクリックで閉じる
+    document.getElementById('caseModal').addEventListener('click', function(e) {
+      if (e.target === this) closeCaseModal();
+    });
+
+    // Escキーで閉じる
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeCaseModal();
     });
   </script>
 
